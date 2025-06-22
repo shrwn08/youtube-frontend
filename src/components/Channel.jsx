@@ -53,7 +53,7 @@ console.log("i am user ",user.id)
       setOpenChannelForm(false)
       setChannelName("");
       setChannelImage(null)
-      //working 
+      //working commit to check
 
     } catch (error) {
       console.error("Creation failed:", error);
