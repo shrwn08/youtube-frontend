@@ -1,0 +1,53 @@
+@import "tailwindcss";
+
+:root {
+  /* Light Mode */
+  --color-like-sub: #ff0000;
+  --color-light-background: #ffffff;
+  --color-light-primarytext: #0f0f0f;
+  --color-light-secondarytext: #606060;
+  --color-light-border: #e0e0e0;
+  --color-light-highlight: #065fd4;
+  --color-light-card: #f9f9f9;
+  font-family: "Roboto", "Arial", sans-serif;
+}
+
+.dark {
+  /* Dark Mode */
+  --color-dark-background: #0f0f0f;
+  --color-dark-primarytext: #ffffff;
+  --color-dark-secondarytext: #aaaaaa;
+  --color-dark-border: #303030;
+  --color-dark-highlight: #3ea6ff;
+  --color-dark-card: #1f1f1f;
+}
+
+/*
+DarkMode
+| Element            | Color (Hex) | Description                       |
+| ------------------ | ----------- | --------------------------------- |
+| Background         | `#0f0f0f`   | Main background (very dark gray)  |
+| Card/Secondary BG  | `#1f1f1f`   | For video cards, menus            |
+| Text (Primary)     | `#ffffff`   | Main text                         |
+| Text (Secondary)   | `#aaaaaa`   | Less prominent text               |
+| Border/Divider     | `#303030`   | Borders, dividers                 |
+| Highlight (Accent) | `#3ea6ff`   | Links, active buttons (blue tone) |
+| Like/Subscribe Red | `#ff0000`   | YouTube red (unchanged)           |
+
+*/
+
+/*
+Light mode
+
+| Element            | Color (Hex) | Description                         |
+| ------------------ | ----------- | ----------------------------------- |
+| Background         | `#ffffff`   | White main background               |
+| Card/Secondary BG  | `#f9f9f9`   | Light gray for video cards          |
+| Text (Primary)     | `#0f0f0f`   | Black or near-black text            |
+| Text (Secondary)   | `#606060`   | Less emphasized text                |
+| Border/Divider     | `#e0e0e0`   | Divider lines                       |
+| Highlight (Accent) | `#065fd4`   | Blue used for active elements/links |
+| Like/Subscribe Red | `#ff0000`   | YouTube red (same as in dark mode)  |
+
+
+*/

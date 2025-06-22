@@ -1,0 +1,11 @@
+.sidebar {
+  transform: scaleX(0);
+  transform-origin: left;
+  animation: openLeftToRight 0.7s ease forwards;
+}
+
+@keyframes openLeftToRight {
+  to {
+    transform: scaleX(1);
+  }
+}
