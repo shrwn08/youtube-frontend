@@ -46,7 +46,7 @@ const VideoItems = () => {
             <img
               src={video.thumbnailUrl}
               alt={video.title}
-              className="w-full h-[240px] object-cover rounded-xl"
+              className="w-full h-[240px] z-0 object-cover rounded-xl"
             />
             <span className="absolute bottom-3 right-2 bg-black/90 text-white text-sm px-2 py-1 rounded-md">
               {video.duration}

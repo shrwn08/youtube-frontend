@@ -6,19 +6,28 @@ import { CiMenuKebab } from "react-icons/ci";
 import { RxAvatar } from "react-icons/rx";
 import { useState } from "react";
 import { IoArrowBack } from "react-icons/io5";
-import { Link, useLocation} from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import "../style/sidebar.css";
 import StoreContext from "../hooks/context/context";
 import { useSelector } from "react-redux";
 import ProfileMenu from "./ProfileMenu";
 import Channel from "./Channel";
+import { GrUploadOption } from "react-icons/gr";
+import VideoUpload from "./VideoUpload";
 
 function Header() {
-  const { toggleSidebar, handleCreateChannelForm, openChannelFrom } = useContext(StoreContext);
-  const { isAuthenticated, user } = useSelector((state) => state.user);
+  const {
+    toggleSidebar,
+    handleCreateChannelForm,
+    openChannelFrom,
+    profileMenuOpen,
+    handleProfileMenuOpen,
+    handleUploadVideoBtn,
+    openUploadVideoPage,
+  } = useContext(StoreContext);
+  const { isAuthenticated, user, channel } = useSelector((state) => state.user);
   const [clickSearchIcon, setClickSearchIcon] = useState(false);
   const hideSearchBar = ["/login", "/signup"].includes(useLocation().pathname);
-  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
 
   const handleClickOnSearchIcon = () => {
     setClickSearchIcon(true);
@@ -28,10 +37,7 @@ function Header() {
     setClickSearchIcon(false);
   };
 
-  const handleProfileMenuOpen = () => {
-    setProfileMenuOpen((prev) => !prev);
-  };
-   console.log(openChannelFrom?"form open":"form close")
+  console.log(openChannelFrom ? "form open" : "form close");
 
   return (
     <>
@@ -72,16 +78,30 @@ function Header() {
             </button>
             <div className="flex gap-3 items-center">
               <CiMenuKebab className="w-6 h-6 text-light-primarytext ml-4 cursor-pointer" />
-              {isAuthenticated && (
-                <div className="py-2 px-4 border-2 font-semibold border-blue-600 rounded-full text-blue-600" onClick={handleCreateChannelForm}>Create</div>
-              )}
+
+              {isAuthenticated &&
+                (channel ? (
+                  <button
+                    className="py-2 px-4 border-2 font-semibold border-blue-600 rounded-full text-blue-600"
+                    onClick={handleCreateChannelForm}
+                  >
+                    Create
+                  </button>
+                ) : (
+                  <button
+                    className="py-2 px-4 border-2 font-semibold border-blue-600 rounded-full text-blue-600"
+                    onClick={handleUploadVideoBtn}
+                  >
+                    <GrUploadOption />
+                  </button>
+                ))}
               {isAuthenticated ? (
                 <div
                   className="h-12 w-12 bg-amber-700 rounded-full flex justify-center items-center hover:cursor-pointer"
                   onClick={handleProfileMenuOpen}
                 >
                   <p className="text-4xl font-medium text-white">
-                    {user && user.fullname[0].toUpperCase()}
+                    {user?.fullname?.[0]?.toUpperCase()}
                   </p>
                 </div>
               ) : (
@@ -112,6 +132,7 @@ function Header() {
       )}
       {profileMenuOpen && <ProfileMenu />}
       {openChannelFrom && <Channel />}
+      {openUploadVideoPage && <VideoUpload />}
     </>
   );
 }
