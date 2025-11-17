@@ -39,7 +39,7 @@ export const unsubscribeFromChannel = createAsyncThunk(
   "subscription/unsubscribe",
   async (channelId, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.delete(`/subscriptions/${channelId}`);
+       await axiosInstance.delete(`/subscriptions/${channelId}`);
       return { channelId };
     } catch (error) {
       return rejectWithValue(error.response?.data || { message: error.message });
