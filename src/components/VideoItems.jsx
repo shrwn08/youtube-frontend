@@ -1,83 +1,90 @@
 import React from "react";
+import { Link } from "react-router-dom";
 
-const VideoItems = () => {
-  const videos = [
-    {
-      videoId: "xYz123AbcDE",
-      title: "How to Learn JavaScript in 2025",
-      channelTitle: "CodeAcademyPro",
-      channelIcon: "💻",
-      viewCount: 125034,
-      timeAgo: "3 days ago",
-      duration: "15:23",
-      thumbnailUrl: "https://i.ytimg.com/vi/xYz123AbcDE/hqdefault.jpg",
-    },
-    {
-      videoId: "mNOp456DefGH",
-      title: "Top 10 AI Tools You Should Try",
-      channelTitle: "TechExplained",
-      channelIcon: "🤖",
-      viewCount: 203421,
-      timeAgo: "1 week ago",
-      duration: "9:45",
-      thumbnailUrl: "https://i.ytimg.com/vi/mNOp456DefGH/hqdefault.jpg",
-    },
-    {
-      videoId: "QrSt789IjkLM",
-      title: "Live Coding: Build a Chat App with Node.js",
-      channelTitle: "DevWithAlex",
-      channelIcon: "👨‍💻",
-      viewCount: 85321,
-      timeAgo: "2 days ago",
-      duration: "1:02:10",
-      thumbnailUrl: "https://i.ytimg.com/vi/QrSt789IjkLM/hqdefault.jpg",
-    },
-  ];
+const VideoItems = ({ videos = [] }) => {
+  if (!videos || videos.length === 0) {
+    return (
+      <div className="w-full min-h-[50vh] flex justify-center items-center">
+        <p className="text-xl text-gray-500">No videos available</p>
+      </div>
+    );
+  }
 
   return (
-    // <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-6 p-6">
-    //   {videos.map((video) => (
-    //     <div
-    //       key={video.videoId}
-    //       className="cursor-pointer w-full max-w-[400px]"
-    //     >
-    //       {/* Thumbnail with duration */}
-    //       <div className="relative">
-    //         <img
-    //           src={video.thumbnailUrl}
-    //           alt={video.title}
-    //           className="w-full h-[240px] z-0 object-cover rounded-xl"
-    //         />
-    //         <span className="absolute bottom-3 right-2 bg-black/90 text-white text-sm px-2 py-1 rounded-md">
-    //           {video.duration}
-    //         </span>
-    //       </div>
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-6 p-6">
+      {videos.map((video) => (
+        <Link
+          to={`/video/${video._id}`}
+          key={video._id}
+          className="cursor-pointer w-full"
+        >
+          {/* Thumbnail */}
+          <div className="relative">
+            <img
+              src={video.thumbnail || video.thumbnails?.high || "https://via.placeholder.com/320x180"}
+              alt={video.title}
+              className="w-full h-[240px] object-cover rounded-xl"
+            />
+            <span className="absolute bottom-3 right-2 bg-black/90 text-white text-sm px-2 py-1 rounded-md">
+              {formatDuration(video.duration)}
+            </span>
+          </div>
 
-    //       {/* Video info */}
-    //       <div className="flex mt-4 gap-3">
-    //         {/* Channel icon */}
-    //         <div className="w-12 h-12 rounded-full bg-gray-200 flex-shrink-0 flex items-center justify-center text-xl">
-    //           {video.channelIcon}
-    //         </div>
+          {/* Video info */}
+          <div className="flex mt-4 gap-3">
+            {/* Channel avatar */}
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-purple-600 flex-shrink-0 flex items-center justify-center text-white font-semibold">
+              {video.user?.username?.[0]?.toUpperCase() || "U"}
+            </div>
 
-    //         {/* Text info */}
-    //         <div className="flex-1 min-w-0">
-    //           <h3 className="font-medium text-[16px] line-clamp-2 leading-tight mb-1">
-    //             {video.title}
-    //           </h3>
-    //           <p className="text-gray-600 text-[14px]">{video.channelTitle}</p>
-    //           <p className="text-gray-500 text-[14px] mt-1">
-    //             {`${video.viewCount.toLocaleString()} views • ${video.timeAgo}`}
-    //           </p>
-    //         </div>
-    //       </div>
-    //     </div>
-    //   ))}
-    // </div>
-    <>
-      I am videoItems
-    </>
+            {/* Text info */}
+            <div className="flex-1 min-w-0">
+              <h3 className="font-medium text-[16px] line-clamp-2 leading-tight mb-1">
+                {video.title}
+              </h3>
+              <p className="text-gray-600 text-[14px]">
+                {video.user?.username || "Unknown"}
+              </p>
+              <p className="text-gray-500 text-[14px] mt-1">
+                {video.views?.toLocaleString() || 0} views • {formatTimeAgo(video.createdAt)}
+              </p>
+            </div>
+          </div>
+        </Link>
+      ))}
+    </div>
   );
+};
+
+// Helper function to format duration
+const formatDuration = (seconds) => {
+  if (!seconds) return "0:00";
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return `${mins}:${secs.toString().padStart(2, "0")}`;
+};
+
+// Helper function to format time ago
+const formatTimeAgo = (date) => {
+  if (!date) return "Recently";
+  const seconds = Math.floor((new Date() - new Date(date)) / 1000);
+  
+  let interval = seconds / 31536000;
+  if (interval > 1) return Math.floor(interval) + " years ago";
+  
+  interval = seconds / 2592000;
+  if (interval > 1) return Math.floor(interval) + " months ago";
+  
+  interval = seconds / 86400;
+  if (interval > 1) return Math.floor(interval) + " days ago";
+  
+  interval = seconds / 3600;
+  if (interval > 1) return Math.floor(interval) + " hours ago";
+  
+  interval = seconds / 60;
+  if (interval > 1) return Math.floor(interval) + " minutes ago";
+  
+  return "Just now";
 };
 
 export default VideoItems;
