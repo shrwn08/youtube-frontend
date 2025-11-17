@@ -3,7 +3,7 @@ import StoreContext from "../hooks/context/context";
 import { IoMdClose } from "react-icons/io";
 import { FaCheckCircle } from "react-icons/fa";
 import { useDispatch, useSelector } from "react-redux";
-import { uploadVideo, confirmUploadCompletion, resetUploadState } from "../redux/slices/videoSlice";
+import { uploadVideo, confirmUploadCompletion, resetUploadState } from "../Redux/slices/videoSlice";
 import { toast } from "react-toastify";
 
 const VideoUpload = () => {
@@ -20,7 +20,7 @@ const VideoUpload = () => {
   
   const fileInputRef = useRef(null);
   const dispatch = useDispatch();
-  const { isLoading, uploadProgress, error, currentVideo } = useSelector((state) => state.video);
+  const { isLoading, uploadProgress, error } = useSelector((state) => state.video);
 
   const categories = [
     "Film & Animation",
