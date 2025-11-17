@@ -1,69 +1,75 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import axios from "axios";
-import backend_URL from "../../API/API.jsx";
+import axiosInstance from "../../API/axiosConfig.js";
 
-const loadInitialState = () => {
-  const token = localStorage.getItem("token");
-  if (token) {
-    // Set axios auth header if token exists
-    axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-  }
-  return {
-    user: null,
-    token: token || null,
-    isLoading: false,
-    isAuthenticated: !!token,
-    isError: false,
-    error: null,
-  };
+const initialState = {
+  user: null,
+  token: localStorage.getItem("authToken") || null,
+  isLoading: false,
+  isAuthenticated: !!localStorage.getItem("authToken"),
+  isError: false,
+  error: null,
 };
 
-const initialState = loadInitialState();
-
+// Create User (Register)
 export const createUser = createAsyncThunk(
-  "createUser",
+  "user/createUser",
   async (userData, { rejectWithValue }) => {
     try {
-      const response = await axios.post(
-        `${backend_URL}/auth/create`,
-        userData,
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-        },
-      );
+      const response = await axiosInstance.post("/auth/create", userData);
       return response.data;
     } catch (err) {
-      return rejectWithValue(err.response?.data || "Something went wrong");
+      return rejectWithValue(err.response?.data || { message: "Registration failed" });
     }
-  },
+  }
 );
 
+// Login User
 export const loginUser = createAsyncThunk(
-  "loginUser",
+  "user/loginUser",
   async (userData, { rejectWithValue }) => {
     try {
-      const response = await axios.post(`${backend_URL}/auth/login`, userData, {
-        headers: {
-          "Content-Type": "application/json",
-        
-        },
-         
-      });
+      const response = await axiosInstance.post("/auth/login", userData);
+      
       if (response.data.token) {
         localStorage.setItem("authToken", response.data.token);
-
-        axios.defaults.headers.common["Authorization"] =
-          `Bearer ${response.data.token}`;
       }
-      return {user : response.data.user,
-        token : response.data.token
-      };
+      
+      return response.data;
     } catch (err) {
-      return rejectWithValue(err.response?.data || "Something went wrong");
+      return rejectWithValue(err.response?.data || { message: "Login failed" });
     }
-  },
+  }
+);
+
+// Load Current User
+export const loadCurrentUser = createAsyncThunk(
+  "user/loadCurrentUser",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.get("/auth/me");
+      return response.data.user;
+    } catch (err) {
+      localStorage.removeItem("authToken");
+      return rejectWithValue(err.response?.data || { message: "Failed to load user" });
+    }
+  }
+);
+
+// Upload Profile Picture
+export const uploadProfilePicture = createAsyncThunk(
+  "user/uploadProfilePicture",
+  async (formData, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.post("/auth/profile-upload", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+      return response.data.user;
+    } catch (err) {
+      return rejectWithValue(err.response?.data || { message: "Upload failed" });
+    }
+  }
 );
 
 const userSlice = createSlice({
@@ -72,27 +78,27 @@ const userSlice = createSlice({
   reducers: {
     logoutUser: (state) => {
       localStorage.removeItem("authToken");
-      delete axios.defaults.headers.common["Authorization"];
       state.user = null;
       state.token = null;
       state.isAuthenticated = false;
+      state.isError = false;
+      state.error = null;
     },
-    loadUser: (state, action) => {
-      state.user = action.payload.user;
-      state.token = action.payload.token;
-      state.isAuthenticated = true;
+    clearError: (state) => {
+      state.isError = false;
+      state.error = null;
     },
   },
   extraReducers: (builder) => {
-    //register
+    // Create User
     builder
       .addCase(createUser.pending, (state) => {
         state.isLoading = true;
         state.isError = false;
+        state.error = null;
       })
-      .addCase(createUser.fulfilled, (state, action) => {
+      .addCase(createUser.fulfilled, (state) => {
         state.isLoading = false;
-        state.user = action.payload;
         state.isError = false;
       })
       .addCase(createUser.rejected, (state, action) => {
@@ -101,25 +107,60 @@ const userSlice = createSlice({
         state.error = action.payload;
       });
 
-    //Login
+    // Login User
     builder
       .addCase(loginUser.pending, (state) => {
         state.isLoading = true;
         state.isError = false;
+        state.error = null;
       })
       .addCase(loginUser.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.isError = false;
         state.user = action.payload.user;
-        state.isAuthenticated = true;
         state.token = action.payload.token;
+        state.isAuthenticated = true;
+        state.isError = false;
       })
       .addCase(loginUser.rejected, (state, action) => {
+        state.isLoading = false;
+        state.isError = true;
+        state.error = action.payload;
+        state.isAuthenticated = false;
+      });
+
+    // Load Current User
+    builder
+      .addCase(loadCurrentUser.pending, (state) => {
+        state.isLoading = true;
+      })
+      .addCase(loadCurrentUser.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.user = action.payload;
+        state.isAuthenticated = true;
+      })
+      .addCase(loadCurrentUser.rejected, (state) => {
+        state.isLoading = false;
+        state.isAuthenticated = false;
+        state.user = null;
+        state.token = null;
+      });
+
+    // Upload Profile Picture
+    builder
+      .addCase(uploadProfilePicture.pending, (state) => {
+        state.isLoading = true;
+      })
+      .addCase(uploadProfilePicture.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.user = action.payload;
+      })
+      .addCase(uploadProfilePicture.rejected, (state, action) => {
         state.isLoading = false;
         state.isError = true;
         state.error = action.payload;
       });
   },
 });
-export const { logoutUser, loadUser } = userSlice.actions;
+
+export const { logoutUser, clearError } = userSlice.actions;
 export default userSlice.reducer;

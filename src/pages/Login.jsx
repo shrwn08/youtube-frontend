@@ -95,7 +95,7 @@ const Login = () => {
             </button>
           </div>
         </form>
-        <Link to="/signin">
+        <Link to="/signup">
           <div className="hover:cursor-pointer hover:text-blue-600">
             Create an account
           </div>
