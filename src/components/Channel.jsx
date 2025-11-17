@@ -1,72 +1,85 @@
-import StoreContext from "../hooks/context/Context"
 import React, { useState, useRef, useContext } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { createChannel } from "../Redux/slices/channelSlice"; 
+import { createChannel, resetChannelState } from "../Redux/slices/channelSlice";
+import { loadCurrentUser } from "../Redux/slices/userSlice";
 import { useNavigate } from 'react-router-dom';
+import StoreContext from "../hooks/context/context";
+import { toast } from 'react-toastify';
 
 const Channel = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { handleCancelChannelForm, setOpenChannelForm } = useContext(StoreContext); // Context for cancel
+  const { handleCancelChannelForm } = useContext(StoreContext);
   const { isLoading, uploadProgress, error } = useSelector(state => state.channel);
-  const {user} = useSelector(state=>state.user)
+  const { user } = useSelector(state => state.user);
   
   const [channelName, setChannelName] = useState('');
   const [channelImage, setChannelImage] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
   const fileInputRef = useRef(null);
 
-  // Handle image selection
   const handleImageChange = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     if (!file.type.startsWith('image/')) {
-      alert('Please upload an image file (JPEG, PNG, etc.)');
+      toast.error('Please upload an image file (JPEG, PNG, etc.)');
       return;
     }
     
     if (file.size > 5 * 1024 * 1024) {
-      alert('Image size should be less than 5MB');
+      toast.error('Image size should be less than 5MB');
       return;
     }
 
     setPreviewUrl(URL.createObjectURL(file));
     setChannelImage(file);
   };
-console.log("i am user ",user.id)
+
+  const handleRemoveImage = () => {
+    setPreviewUrl(null);
+    setChannelImage(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
     if (!channelName.trim() || !channelImage) {
-      alert('Channel name and image are required');
+      toast.error('Channel name and image are required');
       return;
     }
 
     const formData = new FormData();
-    formData.append('channel_name', channelName);
+    formData.append('channel_name', channelName.trim());
     formData.append('channelImage', channelImage);
 
     try {
-      await dispatch(createChannel({formData,userId : user.id})).unwrap();
-      navigate("/my-channel");
-      setOpenChannelForm(false)
+      await dispatch(createChannel({ formData, userId: user._id })).unwrap();
+      toast.success('Channel created successfully!');
+      
+      // Reload user data to get updated channel info
+      await dispatch(loadCurrentUser());
+      
+      // Close form and navigate
+      handleCancelChannelForm();
+      navigate("/");
+      
+      // Reset form
       setChannelName("");
-      setChannelImage(null)
-      //working commit to check
-
-    } catch (error) {
-      console.error("Creation failed:", error);
+      setChannelImage(null);
+      setPreviewUrl(null);
+      dispatch(resetChannelState());
+    } catch (err) {
+      toast.error(err?.message || 'Channel creation failed');
+      console.error("Creation failed:", err);
     }
   };
 
-
-
-
- 
-
   return (
-    <section className='w-screen h-screen fixed top-0 left-0 z-50 flex items-center justify-center backdrop-blur-md'>
+    <section className='w-screen h-screen fixed top-0 left-0 z-50 flex items-center justify-center backdrop-blur-md bg-black/30'>
       <div className='bg-white p-8 rounded-lg shadow-lg max-w-md w-full border border-gray-300'>
         <h2 className='text-2xl font-bold text-gray-800 mb-6 text-center'>Create Channel</h2>
 
@@ -75,15 +88,18 @@ console.log("i am user ",user.id)
           <div className='flex justify-center mb-6'>
             <div 
               className='relative w-24 h-24 rounded-full border-2 border-gray-300 bg-gray-100 flex items-center justify-center cursor-pointer hover:bg-gray-200 transition overflow-hidden'
-              onClick={() => fileInputRef.current.click()}
+              onClick={() => !previewUrl && fileInputRef.current?.click()}
             >
               {previewUrl ? (
                 <>
                   <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
                   <button 
                     type="button"
-                    className="absolute top-0 right-0 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs"
-                    
+                    className="absolute top-0 right-0 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleRemoveImage();
+                    }}
                   >
                     ×
                   </button>
@@ -109,14 +125,28 @@ console.log("i am user ",user.id)
             placeholder="Enter channel name" 
             className='w-full px-4 py-2 rounded bg-gray-100 text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500 mb-6'
             required
+            maxLength={50}
           />
 
-          {/* Error and progress indicators */}
-          {error && <div className="text-red-500 text-sm mb-4">{error.message}</div>}
-          {uploadProgress > 0 && uploadProgress < 100 && (
+          {/* Error display */}
+          {error && (
+            <div className="text-red-500 text-sm mb-4 p-2 bg-red-50 rounded">
+              {error.message || 'An error occurred'}
+            </div>
+          )}
+
+          {/* Progress bar */}
+          {isLoading && uploadProgress > 0 && (
             <div className="mb-4">
-              <progress value={uploadProgress} max="100" className="w-full" />
-              <p className="text-xs text-gray-500 mt-1">Uploading: {uploadProgress}%</p>
+              <div className="w-full bg-gray-200 rounded-full h-2.5">
+                <div 
+                  className="bg-red-600 h-2.5 rounded-full transition-all duration-300"
+                  style={{ width: `${uploadProgress}%` }}
+                ></div>
+              </div>
+              <p className="text-xs text-gray-500 mt-1 text-center">
+                Uploading: {uploadProgress}%
+              </p>
             </div>
           )}
 
@@ -124,7 +154,7 @@ console.log("i am user ",user.id)
           <div className='flex justify-end space-x-4'>
             <button 
               type="button"
-              className='px-4 py-2 rounded text-gray-700 bg-gray-200 hover:bg-gray-300 transition'
+              className='px-4 py-2 rounded text-gray-700 bg-gray-200 hover:bg-gray-300 transition disabled:opacity-50'
               onClick={handleCancelChannelForm}
               disabled={isLoading}
             >
@@ -132,7 +162,7 @@ console.log("i am user ",user.id)
             </button>
             <button 
               type="submit"
-              className='px-4 py-2 rounded text-white bg-red-600 hover:bg-red-700 transition disabled:bg-red-400'
+              className='px-4 py-2 rounded text-white bg-red-600 hover:bg-red-700 transition disabled:bg-red-400 disabled:cursor-not-allowed'
               disabled={isLoading}
             >
               {isLoading ? 'Creating...' : 'Create'}
