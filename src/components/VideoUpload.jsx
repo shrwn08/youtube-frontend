@@ -3,42 +3,82 @@ import StoreContext from "../hooks/context/context";
 import { IoMdClose } from "react-icons/io";
 import { FaCheckCircle } from "react-icons/fa";
 import { useDispatch, useSelector } from "react-redux";
-import { uploadVideo, resetUploadState } from "../Redux/slices/videoSlice";
+import { uploadVideo, confirmUploadCompletion, resetUploadState } from "../redux/slices/videoSlice";
+import { toast } from "react-toastify";
 
 const VideoUpload = () => {
   const { handleCloseVideoUpload } = useContext(StoreContext);
   const [step, setStep] = useState(1); // 1 = upload, 2 = form
   const [videoFile, setVideoFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState("");
+  const [videoId, setVideoId] = useState(null);
   const [formData, setFormData] = useState({
     title: "",
     description: "",
     category: "",
   });
+  
   const fileInputRef = useRef(null);
   const dispatch = useDispatch();
-  const { isLoading, uploadProgress, error } = useSelector((state) =>
-    state.video
-  );
+  const { isLoading, uploadProgress, error, currentVideo } = useSelector((state) => state.video);
+
+  const categories = [
+    "Film & Animation",
+    "Autos & Vehicles",
+    "Music",
+    "Pets & Animals",
+    "Sports",
+    "Travel & Events",
+    "Gaming",
+    "People & Blogs",
+    "Comedy",
+    "Entertainment",
+    "News & Politics",
+    "Howto & Style",
+    "Education",
+    "Science & Technology",
+    "Nonprofits & Activism"
+  ];
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
-    if (file) {
-      setVideoFile(file);
-      setPreviewUrl(URL.createObjectURL(file));
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('video/')) {
+      toast.error('Please select a video file');
+      return;
     }
+
+    // Validate file size (max 500MB)
+    if (file.size > 500 * 1024 * 1024) {
+      toast.error('Video file must be less than 500MB');
+      return;
+    }
+
+    setVideoFile(file);
+    setPreviewUrl(URL.createObjectURL(file));
   };
 
   const handleUpload = async () => {
-    if (!videoFile) return;
+    if (!videoFile) {
+      toast.error('Please select a video file');
+      return;
+    }
 
-    const formData = new FormData();
-    formData.append("video", videoFile);
+    const uploadFormData = new FormData();
+    uploadFormData.append("video", videoFile);
+    uploadFormData.append("title", formData.title || videoFile.name);
+    uploadFormData.append("description", formData.description || "");
+    uploadFormData.append("category", formData.category || "Entertainment");
 
     try {
-      await dispatch(uploadVideo(formData)).unwrap();
-      setStep(2); // Move to form step after successful upload
+      const result = await dispatch(uploadVideo(uploadFormData)).unwrap();
+      setVideoId(result.videoId);
+      toast.success('Video uploaded successfully!');
+      setStep(2); // Move to form step
     } catch (err) {
+      toast.error(err?.message || 'Upload failed');
       console.error("Upload failed:", err);
     }
   };
@@ -53,14 +93,40 @@ const VideoUpload = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    // Here you would typically send the form data to your backend
-    // along with the video ID to update the video details
-    console.log("Form submitted:", formData);
-    handleCloseVideoUpload();
-    dispatch(resetUploadState());
+
+    if (!formData.title.trim()) {
+      toast.error('Title is required');
+      return;
+    }
+
+    if (!formData.category) {
+      toast.error('Category is required');
+      return;
+    }
+
+    try {
+      // Confirm the upload completion
+      if (videoId) {
+        await dispatch(confirmUploadCompletion(videoId)).unwrap();
+      }
+      
+      toast.success('Video published successfully!');
+      handleClose();
+    } catch (err) {
+      toast.error(err?.message || 'Failed to publish video');
+      console.error("Submit failed:", err);
+    }
   };
 
-  console.log("error", error)
+  const handleClose = () => {
+    handleCloseVideoUpload();
+    dispatch(resetUploadState());
+    setStep(1);
+    setVideoFile(null);
+    setPreviewUrl("");
+    setFormData({ title: "", description: "", category: "" });
+  };
+
   return (
     <div className="h-screen w-screen bg-[rgba(0,0,0,0.5)] fixed top-0 left-0 flex justify-center items-center z-50">
       <div className="h-2/3 w-10/12 max-w-3xl bg-white rounded-xl border-2 flex flex-col overflow-hidden">
@@ -70,11 +136,8 @@ const VideoUpload = () => {
           </h2>
           <button
             type="button"
-            onClick={() => {
-              handleCloseVideoUpload();
-              dispatch(resetUploadState());
-            }}
-            className="h-6 w-6 text-red-600 text-2xl hover:cursor-pointer"
+            onClick={handleClose}
+            className="h-6 w-6 text-red-600 text-2xl hover:cursor-pointer hover:text-red-700"
           >
             <IoMdClose />
           </button>
@@ -106,7 +169,7 @@ const VideoUpload = () => {
                 </label>
               </div>
             ) : (
-              <div className="flex-1 flex flex-col items-center">
+              <div className="flex-1 flex flex-col items-center justify-center">
                 <div className="w-full max-w-md mb-6">
                   <video
                     src={previewUrl}
@@ -115,18 +178,16 @@ const VideoUpload = () => {
                   />
                 </div>
                 <div className="w-full max-w-md mb-4">
-                  {isLoading ? (
+                  <p className="text-center mb-2">
+                    {videoFile.name} ({Math.round(videoFile.size / 1024 / 1024)}MB)
+                  </p>
+                  {isLoading && (
                     <div className="w-full bg-gray-200 rounded-full h-2.5">
                       <div
-                        className="bg-blue-600 h-2.5 rounded-full"
+                        className="bg-blue-600 h-2.5 rounded-full transition-all duration-300"
                         style={{ width: `${uploadProgress}%` }}
                       ></div>
                     </div>
-                  ) : (
-                    <p className="text-center">
-                      {videoFile.name} (
-                      {Math.round(videoFile.size / 1024 / 1024)}MB)
-                    </p>
                   )}
                 </div>
                 <div className="flex gap-4">
@@ -134,9 +195,12 @@ const VideoUpload = () => {
                     onClick={() => {
                       setVideoFile(null);
                       setPreviewUrl("");
-                      fileInputRef.current.value = "";
+                      if (fileInputRef.current) {
+                        fileInputRef.current.value = "";
+                      }
                     }}
-                    className="px-4 py-2 border border-gray-300 rounded text-gray-700 hover:bg-gray-100"
+                    disabled={isLoading}
+                    className="px-4 py-2 border border-gray-300 rounded text-gray-700 hover:bg-gray-100 disabled:opacity-50"
                   >
                     Change Video
                   </button>
@@ -145,14 +209,18 @@ const VideoUpload = () => {
                     disabled={isLoading}
                     className={`px-6 py-2 rounded text-white ${
                       isLoading
-                        ? "bg-blue-400"
+                        ? "bg-blue-400 cursor-not-allowed"
                         : "bg-blue-600 hover:bg-blue-700"
                     }`}
                   >
                     {isLoading ? `Uploading... ${uploadProgress}%` : "Upload"}
                   </button>
                 </div>
-                {error && <p className="mt-4 text-red-500">{error}</p>}
+                {error && (
+                  <p className="mt-4 text-red-500 text-sm">
+                    {error.message || 'Upload failed'}
+                  </p>
+                )}
               </div>
             )}
           </div>
@@ -161,7 +229,7 @@ const VideoUpload = () => {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Title
+                  Title *
                 </label>
                 <input
                   type="text"
@@ -169,6 +237,8 @@ const VideoUpload = () => {
                   value={formData.title}
                   onChange={handleFormChange}
                   required
+                  maxLength={100}
+                  placeholder="Add a title that describes your video"
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
@@ -181,14 +251,16 @@ const VideoUpload = () => {
                   name="description"
                   value={formData.description}
                   onChange={handleFormChange}
-                  rows={3}
+                  rows={4}
+                  maxLength={5000}
+                  placeholder="Tell viewers about your video"
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Category
+                  Category *
                 </label>
                 <select
                   name="category"
@@ -198,11 +270,11 @@ const VideoUpload = () => {
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="">Select a category</option>
-                  <option value="education">Education</option>
-                  <option value="entertainment">Entertainment</option>
-                  <option value="gaming">Gaming</option>
-                  <option value="music">Music</option>
-                  <option value="technology">Technology</option>
+                  {categories.map((cat) => (
+                    <option key={cat} value={cat}>
+                      {cat}
+                    </option>
+                  ))}
                 </select>
               </div>
 
@@ -216,9 +288,10 @@ const VideoUpload = () => {
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                  disabled={isLoading}
+                  className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed"
                 >
-                  Submit
+                  {isLoading ? 'Publishing...' : 'Publish'}
                 </button>
               </div>
             </form>
