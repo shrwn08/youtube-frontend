@@ -51,9 +51,9 @@ function Home() {
           <p className="text-xl text-red-500 mb-4">Failed to load videos</p>
           <button
             onClick={() => dispatch(getAllVideos())}
-            className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+            className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
           >
-            Retry
+            Try Again
           </button>
         </div>
       </div>
@@ -63,7 +63,11 @@ function Home() {
   return (
     <div className="w-full">
       <CapsulButtons onCategorySelect={handleCategorySelect} />
-      {isLoading ? <VideoGridSkeleton count={12} /> : <VideoItems videos={filteredVideos} />}
+      {isLoading ? (
+        <VideoGridSkeleton count={12} />
+      ) : (
+        <VideoItems videos={filteredVideos} />
+      )}
     </div>
   );
 }
