@@ -1,30 +1,44 @@
 import React, { useContext } from "react";
-import StoreContext from "../hooks/context/context";
+import { Outlet } from "react-router-dom";
 import Header from "../components/Header";
-import { Outlet } from "react-router";
 import Sidebar from "../components/Sidebar";
 import MiniSidebar from "../components/MiniSidebar";
+import StoreContext from "../hooks/context/context";
 
 const MainLayout = () => {
-  const { sidebarOpen } = useContext(StoreContext);
+  const { sidebarOpen, toggleSidebar } = useContext(StoreContext);
+
   return (
-    <section className="flex flex-col h-screen overflow-hidden">
+    <div className="w-screen h-screen overflow-hidden flex flex-col">
       <Header />
-      <div className="flex  min-h-screen">
-        {sidebarOpen ? (
-          <div className="w-40  ">
-            <Sidebar />
-          </div>
-        ) : (
-          <div className="w-24  ">
-            <MiniSidebar />
+      
+      <div className="flex-1 flex overflow-hidden">
+        {/* Desktop Sidebar */}
+        <div className="hidden sm:block">
+          {sidebarOpen ? <Sidebar /> : <MiniSidebar />}
+        </div>
+
+        {/* Mobile Sidebar Overlay */}
+        {sidebarOpen && (
+          <div
+            className="fixed inset-0 bg-black/50 z-40 sm:hidden"
+            onClick={toggleSidebar}
+          >
+            <div
+              className="absolute left-0 top-0 h-full bg-white shadow-lg"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <Sidebar />
+            </div>
           </div>
         )}
-        <main className="w-full ">
+
+        {/* Main Content */}
+        <main className="flex-1 overflow-y-auto bg-white">
           <Outlet />
         </main>
       </div>
-    </section>
+    </div>
   );
 };
 

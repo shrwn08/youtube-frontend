@@ -5,13 +5,14 @@ import App from "./App.jsx";
 import { StoreProvider } from "./hooks/context/context.jsx";
 import store from "./Redux/store.js";
 import { Provider } from "react-redux";
+import { BrowserRouter } from "react-router";
 
 createRoot(document.getElementById("root")).render(
-  <StrictMode>
-    <Provider store={store}>
-      <StoreProvider>
-        <App />
-      </StoreProvider>
-    </Provider>
-  </StrictMode>,
+  <Provider store={store}>        {/* Redux */}
+  <BrowserRouter>
+    <StoreProvider>            {/* Context */}
+      <App />
+    </StoreProvider>
+  </BrowserRouter>
+</Provider>
 );
