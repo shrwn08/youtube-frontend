@@ -128,10 +128,11 @@ const userSlice = createSlice({
         state.isAuthenticated = false;
       });
 
-    // Load Current User
+    // Load Current User - FIXED: Don't reset isAuthenticated immediately
     builder
       .addCase(loadCurrentUser.pending, (state) => {
         state.isLoading = true;
+        // Keep isAuthenticated true while loading
       })
       .addCase(loadCurrentUser.fulfilled, (state, action) => {
         state.isLoading = false;

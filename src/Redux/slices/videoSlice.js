@@ -119,10 +119,12 @@ const videoSlice = createSlice({
     builder
       .addCase(getAllVideos.pending, (state) => {
         state.isLoading = true;
+        state.isError = false;
       })
       .addCase(getAllVideos.fulfilled, (state, action) => {
         state.isLoading = false;
         state.videos = action.payload;
+        state.isError = false;
       })
       .addCase(getAllVideos.rejected, (state, action) => {
         state.isLoading = false;
@@ -134,10 +136,12 @@ const videoSlice = createSlice({
     builder
       .addCase(getShorts.pending, (state) => {
         state.isLoading = true;
+        state.isError = false;
       })
       .addCase(getShorts.fulfilled, (state, action) => {
         state.isLoading = false;
         state.shorts = action.payload;
+        state.isError = false;
       })
       .addCase(getShorts.rejected, (state, action) => {
         state.isLoading = false;
