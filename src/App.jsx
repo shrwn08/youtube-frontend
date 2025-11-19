@@ -2,18 +2,21 @@ import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { loadCurrentUser } from "./Redux/slices/userSlice";
 import { ToastContainer } from "react-toastify";
+import { StoreProvider } from "./hooks/context/context";
 import "react-toastify/dist/ReactToastify.css";
 import "./App.css";
 import Routes from "./routes/Routes";
 
 function App() {
   const dispatch = useDispatch();
-  const { isAuthenticated, isLoading } = useSelector((state) => state.user);
+  const {  isLoading, user } = useSelector((state) => state.user);
 
   useEffect(() => {
     const initializeAuth = async () => {
       const token = localStorage.getItem("authToken");
-      if (token && !isAuthenticated) {
+      
+      // Only load user if token exists AND user is not already loaded
+      if (token && !user) {
         try {
           await dispatch(loadCurrentUser()).unwrap();
         } catch (error) {
@@ -24,9 +27,10 @@ function App() {
     };
 
     initializeAuth();
-  }, [dispatch, isAuthenticated]);
+  }, [dispatch, user]);
 
-  if (isLoading && !isAuthenticated) {
+  // Show loading only on initial mount when we have token but no user
+  if (isLoading && localStorage.getItem("authToken") && !user) {
     return (
       <div className="w-screen h-screen flex items-center justify-center">
         <div className="text-center">
@@ -38,7 +42,7 @@ function App() {
   }
 
   return (
-    <>
+    <StoreProvider>
       <Routes />
       <ToastContainer
         position="top-right"
@@ -52,7 +56,7 @@ function App() {
         pauseOnHover
         theme="light"
       />
-    </>
+    </StoreProvider>
   );
 }
 
