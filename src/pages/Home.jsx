@@ -12,8 +12,11 @@ function Home() {
   const [selectedCategory, setSelectedCategory] = useState(null);
 
   useEffect(() => {
-    dispatch(getAllVideos());
-  }, [dispatch]);
+    // Only fetch if we don't have videos yet
+    if (!videos || videos.length === 0) {
+      dispatch(getAllVideos());
+    }
+  }, [dispatch, videos]);
 
   useEffect(() => {
     if (videos) {
@@ -63,7 +66,9 @@ function Home() {
   return (
     <div className="w-full">
       <CapsulButtons onCategorySelect={handleCategorySelect} />
-      {isLoading ? (
+      
+      {/* Show skeleton only on initial load (no videos) */}
+      {isLoading && (!videos || videos.length === 0) ? (
         <VideoGridSkeleton count={12} />
       ) : (
         <VideoItems videos={filteredVideos} />
