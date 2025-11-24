@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { createChannel, resetChannelState } from "../Redux/slices/channelSlice";
 import { loadCurrentUser } from "../Redux/slices/userSlice";
 import { useNavigate } from 'react-router-dom';
-import StoreContext from "../hooks/context/context";
+import StoreContext from "../hooks/context/Context";
 import { toast } from 'react-toastify';
 
 const Channel = () => {

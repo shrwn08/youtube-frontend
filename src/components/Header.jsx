@@ -7,7 +7,7 @@ import { RxAvatar } from "react-icons/rx";
 import { useState } from "react";
 import { IoArrowBack } from "react-icons/io5";
 import { Link, useLocation } from "react-router-dom";
-import StoreContext from "../hooks/context/context";
+import StoreContext from "../hooks/context/Context";
 import { useSelector, useDispatch } from "react-redux";
 import { loadCurrentUser } from "../Redux/slices/userSlice";
 import ProfileMenu from "./ProfileMenu";

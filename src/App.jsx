@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { loadCurrentUser } from "./Redux/slices/userSlice";
 import { ToastContainer } from "react-toastify";
-import { StoreProvider } from "./hooks/context/context";
+import { StoreProvider } from "./hooks/context/Context";
 import "react-toastify/dist/ReactToastify.css";
 import "./App.css";
 import Routes from "./routes/Routes";

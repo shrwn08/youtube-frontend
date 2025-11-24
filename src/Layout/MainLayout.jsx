@@ -3,7 +3,7 @@ import { Outlet } from "react-router-dom";
 import Header from "../components/Header";
 import Sidebar from "../components/Sidebar";
 import MiniSidebar from "../components/MiniSidebar";
-import StoreContext from "../hooks/context/context";
+import StoreContext from "../hooks/context/Context";
 
 const MainLayout = () => {
   const { sidebarOpen, toggleSidebar } = useContext(StoreContext);

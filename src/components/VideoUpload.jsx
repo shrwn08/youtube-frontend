@@ -1,5 +1,5 @@
-import React, { useContext, useState, useRef, useMemo, useEffect } from "react";
-import StoreContext from "../hooks/context/context";
+import React, { useContext, useState, useRef, useMemo } from "react";
+import StoreContext from "../hooks/context/Context";
 import { IoMdClose } from "react-icons/io";
 import { FaCheckCircle } from "react-icons/fa";
 import { useDispatch, useSelector } from "react-redux";
