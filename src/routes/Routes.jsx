@@ -6,7 +6,7 @@ import Home from "../pages/Home";
 import Login from "../pages/Login";
 import Signin from "../pages/Signin";
 import NotFound from "../pages/NotFound";
-import PlayVideo from "../pages/PlayVideo";
+import PlayVideo from "../pages/Playvideo";
 import PlayShort from "../pages/PlayShort";
 import ShortsPage from "../pages/ShortsPage";
 import ChannelDashboard from "../pages/ChannelDashboard";
