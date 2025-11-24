@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { getMySubscriptions } from "../redux/slices/subscriptionSlice";
+import { getMySubscriptions } from "../Redux/slices/subscriptionSlice";
 
 const SubscriptionsPage = () => {
   const dispatch = useDispatch();
