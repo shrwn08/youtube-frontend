@@ -12,7 +12,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { loadCurrentUser } from "../Redux/slices/userSlice";
 import ProfileMenu from "./ProfileMenu";
 import Channel from "./Channel";
-import { GrUploadOption } from "react-icons/gr";
+import { MdOutlineVideoCall } from "react-icons/md";
 import VideoUpload from "./VideoUpload";
 
 function Header() {
@@ -27,13 +27,14 @@ function Header() {
   } = useContext(StoreContext);
 
   const dispatch = useDispatch();
-  const { isAuthenticated, user } = useSelector((state) => state.user);
+  const { isAuthenticated, user, isLoading } = useSelector((state) => state.user);
   const [clickSearchIcon, setClickSearchIcon] = useState(false);
   const hideSearchBar = ["/login", "/signup"].includes(useLocation().pathname);
 
   // Load user on mount if token exists
   useEffect(() => {
-    if (localStorage.getItem("authToken") && !user) {
+    const token = localStorage.getItem("authToken");
+    if (token && !user) {
       dispatch(loadCurrentUser());
     }
   }, [dispatch, user]);
@@ -46,82 +47,109 @@ function Header() {
     setClickSearchIcon(false);
   };
 
-  const hasChannel = user?.hasOwnChannel;
+  // Check if user has a channel
+  const hasChannel = user?.hasOwnChannel === true;
+
+  // Get first letter of user's name
+  const getUserInitial = () => {
+    if (user?.fullname) {
+      return user.fullname[0].toUpperCase();
+    }
+    if (user?.username) {
+      return user.username[0].toUpperCase();
+    }
+    return "U";
+  };
 
   return (
     <>
       {!clickSearchIcon ? (
-        <header className="w-full h-20 flex justify-center items-center py-2">
+        <header className="w-full h-20 flex justify-center items-center py-2 border-b bg-white">
           <div className="w-49/50 h-full flex justify-between items-center">
-            <div className="flex items-center">
-              <div onClick={toggleSidebar} className="z-100">
-                <IoMdMenu className="w-8 h-8 text-light-primarytext mr-4 cursor-pointer" />
+            {/* Left section - Logo */}
+            <div className="flex items-center gap-2">
+              <div onClick={toggleSidebar} className="cursor-pointer">
+                <IoMdMenu className="w-8 h-8 text-gray-700 hover:bg-gray-100 rounded-full p-1 transition" />
               </div>
-              <Link to="/">
+              <Link to="/" className="flex items-center">
                 <img
                   src={TextLogo}
                   alt="YouTube logo"
-                  className="w-20 hover:cursor-pointer"
+                  className="w-20 cursor-pointer"
                 />
               </Link>
             </div>
 
+            {/* Middle section - Search */}
             {!hideSearchBar && (
               <div className="w-1/3 h-10 rounded-full border hidden overflow-hidden sm:flex">
                 <input
                   className="w-10/12 h-full px-4 focus:outline-none"
                   placeholder="Search"
                 />
-                <button className="w-2/12 h-full bg-gray-100 flex justify-center items-center border-l hover:cursor-pointer">
+                <button className="w-2/12 h-full bg-gray-100 flex justify-center items-center border-l hover:bg-gray-200 transition">
                   <CiSearch className="h-5 w-5" />
                 </button>
               </div>
             )}
 
+            {/* Mobile search icon */}
             <button
-              className="border-none sm:hidden"
+              className="border-none sm:hidden p-2 hover:bg-gray-100 rounded-full"
               onClick={handleClickOnSearchIcon}
             >
               <CiSearch className="w-6 h-6 font-semibold" />
             </button>
 
-            <div className="flex gap-3 items-center">
-              <CiMenuKebab className="w-6 h-6 text-light-primarytext ml-4 cursor-pointer" />
+            {/* Right section - Actions */}
+            <div className="flex gap-2 items-center">
+              {/* More menu - hidden on mobile */}
+              <button className="p-2 hover:bg-gray-100 rounded-full hidden md:block">
+                <CiMenuKebab className="w-6 h-6 text-gray-700" />
+              </button>
 
-              {isAuthenticated && (
+              {/* CONDITIONAL RENDERING - Show Upload OR Create Channel */}
+              {isAuthenticated && user && !isLoading && (
                 <>
-                  {!hasChannel ? (
+                  {hasChannel ? (
+                    // ✅ USER HAS CHANNEL - Show Upload Button
                     <button
-                      className="py-2 px-4 border-2 font-semibold border-blue-600 rounded-full text-blue-600 hover:bg-blue-50"
-                      onClick={handleCreateChannelForm}
+                      onClick={handleUploadVideoBtn}
+                      className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-full transition duration-200 font-medium shadow-sm"
+                      title="Upload a video"
                     >
-                      Create Channel
+                      <MdOutlineVideoCall className="text-2xl" />
+                      <span className="hidden sm:inline">Upload</span>
                     </button>
                   ) : (
+                    // ❌ USER HAS NO CHANNEL - Show Create Channel Button
                     <button
-                      className="py-2 px-4 border-2 font-semibold border-blue-600 rounded-full text-blue-600 hover:bg-blue-50"
-                      onClick={handleUploadVideoBtn}
+                      onClick={handleCreateChannelForm}
+                      className="flex items-center gap-2 px-4 py-2 border-2 border-blue-600 text-blue-600 hover:bg-blue-50 rounded-full transition duration-200 font-medium"
+                      title="Create your channel to start uploading videos"
                     >
-                      <GrUploadOption />
+                      <span>Create Channel</span>
                     </button>
                   )}
                 </>
               )}
 
-              {isAuthenticated ? (
+              {/* User profile or sign up */}
+              {isAuthenticated && user ? (
                 <div
-                  className="h-12 w-12 bg-amber-700 rounded-full flex justify-center items-center hover:cursor-pointer"
+                  className="h-10 w-10 bg-gradient-to-br from-orange-400 to-orange-600 rounded-full flex justify-center items-center cursor-pointer shadow-md hover:shadow-lg transition-all duration-200"
                   onClick={handleProfileMenuOpen}
+                  title={user.fullname || user.username}
                 >
-                  <p className="text-2xl font-medium text-white">
-                    {user?.fullname?.[0]?.toUpperCase() || "U"}
+                  <p className="text-xl font-semibold text-white">
+                    {getUserInitial()}
                   </p>
                 </div>
               ) : (
                 <Link to="/signup">
-                  <div className="w-24 h-10 border border-blue-600 rounded-full flex items-center justify-center gap-1 hover:bg-blue-50">
+                  <div className="flex items-center gap-1 px-4 py-2 border border-blue-600 rounded-full hover:bg-blue-50 transition duration-200">
                     <RxAvatar className="h-6 w-6 text-blue-600" />
-                    <p className="text-blue-600 text-md">Sign up</p>
+                    <p className="text-blue-600 text-sm font-medium">Sign up</p>
                   </div>
                 </Link>
               )}
@@ -129,20 +157,30 @@ function Header() {
           </div>
         </header>
       ) : (
-        <header className="w-screen h-16 flex justify-center items-center">
-          <div className="w-49/50 flex justify-between items-center">
-            <div onClick={handleClickOnSearchIconOut}>
-              <IoArrowBack className="w-6 h-6 text-light-primarytext mr-4 cursor-pointer" />
-            </div>
-            <div className="w-2/3 h-full flex justify-between items-center rounded-full overflow-hidden">
-              <input className="w-full h-10 rounded-l-full border pl-5" />
-              <button className="w-14 h-10 flex justify-center items-center rounded-r-full border-l-none border">
-                <CiSearch className="h-6 w-6 font-semibold" />
+        // Mobile search expanded view
+        <header className="w-screen h-16 flex justify-center items-center border-b bg-white">
+          <div className="w-49/50 flex justify-between items-center gap-3">
+            <button 
+              onClick={handleClickOnSearchIconOut}
+              className="p-2 hover:bg-gray-100 rounded-full"
+            >
+              <IoArrowBack className="w-6 h-6 text-gray-700" />
+            </button>
+            <div className="flex-1 flex items-center rounded-full border overflow-hidden">
+              <input 
+                className="flex-1 h-10 px-4 focus:outline-none" 
+                placeholder="Search"
+                autoFocus
+              />
+              <button className="w-12 h-10 flex justify-center items-center border-l hover:bg-gray-100">
+                <CiSearch className="h-6 w-6" />
               </button>
             </div>
           </div>
         </header>
       )}
+      
+      {/* Modals/Overlays */}
       {profileMenuOpen && <ProfileMenu />}
       {openChannelFrom && <Channel />}
       {openUploadVideoPage && <VideoUpload />}

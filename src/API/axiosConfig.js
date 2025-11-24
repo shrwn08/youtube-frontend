@@ -4,31 +4,60 @@ const backend_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:8080/a
 
 const axiosInstance = axios.create({
   baseURL: backend_URL,
-  timeout: 30000,
+  timeout: 600000, // INCREASED: 10 minutes for large video uploads
   headers: {
     "Content-Type": "application/json",
   },
   withCredentials: true,
+  // ADDED: Support for upload progress
+  maxContentLength: Infinity,
+  maxBodyLength: Infinity,
 });
 
-// add token to requests
+// Add token to requests
 axiosInstance.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("authToken");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    
+    // Log upload requests
+    if (config.url?.includes('/upload')) {
+      console.log('🚀 Upload request starting:', {
+        url: config.url,
+        method: config.method,
+        hasData: !!config.data,
+      });
+    }
+    
     return config;
   },
   (error) => {
+    console.error('Request interceptor error:', error);
     return Promise.reject(error);
   }
 );
 
-// handle responses
+// Handle responses
 axiosInstance.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // Log upload completions
+    if (response.config.url?.includes('/upload')) {
+      console.log('✅ Upload response received:', {
+        status: response.status,
+        data: response.data
+      });
+    }
+    return response;
+  },
   (error) => {
+    console.error('Response error:', {
+      status: error.response?.status,
+      message: error.message,
+      url: error.config?.url
+    });
+    
     if (error.response?.status === 401) {
       localStorage.removeItem("authToken");
       const currentPath = window.location.pathname;

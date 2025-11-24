@@ -57,21 +57,27 @@ const Channel = () => {
     formData.append('channelImage', channelImage);
 
     try {
+      // Create channel
       await dispatch(createChannel({ formData, userId: user._id })).unwrap();
+      
       toast.success('Channel created successfully!');
       
-      // Reload user data to get updated channel info
-      await dispatch(loadCurrentUser());
+      // CRITICAL: Reload user data to get updated hasOwnChannel flag
+      await dispatch(loadCurrentUser()).unwrap();
       
-      // Close form and navigate
-      handleCancelChannelForm();
-      navigate("/");
+      // Small delay to ensure state is updated
+      setTimeout(() => {
+        // Close form and navigate
+        handleCancelChannelForm();
+        navigate("/");
+        
+        // Reset form
+        setChannelName("");
+        setChannelImage(null);
+        setPreviewUrl(null);
+        dispatch(resetChannelState());
+      }, 500);
       
-      // Reset form
-      setChannelName("");
-      setChannelImage(null);
-      setPreviewUrl(null);
-      dispatch(resetChannelState());
     } catch (err) {
       toast.error(err?.message || 'Channel creation failed');
       console.error("Creation failed:", err);
@@ -126,6 +132,7 @@ const Channel = () => {
             className='w-full px-4 py-2 rounded bg-gray-100 text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500 mb-6'
             required
             maxLength={50}
+            disabled={isLoading}
           />
 
           {/* Error display */}

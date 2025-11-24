@@ -1,7 +1,10 @@
+import { useSelector } from "react-redux";
 import VideoCard from "./VideoCard";
 
-const VideoItems = ({ videos = [] }) => {
-  if (!videos || videos.length === 0) {
+const VideoItems = () => {
+  const {videos} = useSelector((state=>state.video));
+ 
+  if (!videos ||  videos.length === 0) {
     return (
       <div className="w-full min-h-[50vh] flex justify-center items-center">
         <div className="text-center">

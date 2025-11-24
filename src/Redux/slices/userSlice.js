@@ -72,6 +72,23 @@ export const uploadProfilePicture = createAsyncThunk(
   }
 );
 
+// ✅ NEW: Create Channel
+export const createChannel = createAsyncThunk(
+  "user/createChannel",
+  async ({ userId, formData }, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.post(`/channel/create/${userId}`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+      return response.data.user; // Return updated user
+    } catch (err) {
+      return rejectWithValue(err.response?.data || { message: "Channel creation failed" });
+    }
+  }
+);
+
 const userSlice = createSlice({
   name: "user",
   initialState,
@@ -87,6 +104,13 @@ const userSlice = createSlice({
     clearError: (state) => {
       state.isError = false;
       state.error = null;
+    },
+    // ✅ NEW: Update user after channel creation (for optimistic updates)
+    updateUserChannel: (state, action) => {
+      if (state.user) {
+        state.user.hasOwnChannel = true;
+        state.user.channel = action.payload.channelId;
+      }
     },
   },
   extraReducers: (builder) => {
@@ -128,11 +152,10 @@ const userSlice = createSlice({
         state.isAuthenticated = false;
       });
 
-    // Load Current User - FIXED: Don't reset isAuthenticated immediately
+    // Load Current User
     builder
       .addCase(loadCurrentUser.pending, (state) => {
         state.isLoading = true;
-        // Keep isAuthenticated true while loading
       })
       .addCase(loadCurrentUser.fulfilled, (state, action) => {
         state.isLoading = false;
@@ -160,8 +183,26 @@ const userSlice = createSlice({
         state.isError = true;
         state.error = action.payload;
       });
+
+    // ✅ NEW: Create Channel
+    builder
+      .addCase(createChannel.pending, (state) => {
+        state.isLoading = true;
+        state.isError = false;
+        state.error = null;
+      })
+      .addCase(createChannel.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.user = action.payload; // Update user with channel info
+        state.isError = false;
+      })
+      .addCase(createChannel.rejected, (state, action) => {
+        state.isLoading = false;
+        state.isError = true;
+        state.error = action.payload;
+      });
   },
 });
 
-export const { logoutUser, clearError } = userSlice.actions;
+export const { logoutUser, clearError, updateUserChannel } = userSlice.actions;
 export default userSlice.reducer;
